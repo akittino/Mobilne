@@ -9,6 +9,8 @@
 /* Begin PBXBuildFile section */
 		AF378B621BF88F4200A4A414 /* Alamofire.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF378B531BF88E3100A4A414 /* Alamofire.framework */; };
 		AF378B9D1BF8DEED00A4A414 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AF378B9C1BF8DEED00A4A414 /* Main.storyboard */; };
+		AFC51D431C14CCEE0054D478 /* Alamofire.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF378B531BF88E3100A4A414 /* Alamofire.framework */; };
+		AFC51D441C14CCEE0054D478 /* Alamofire.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = AF378B531BF88E3100A4A414 /* Alamofire.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		AFF5D1751BF831170096B2FC /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFF5D1741BF831170096B2FC /* AppDelegate.swift */; };
 		AFF5D1771BF831170096B2FC /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFF5D1761BF831170096B2FC /* ViewController.swift */; };
 		AFF5D17C1BF831170096B2FC /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AFF5D17B1BF831170096B2FC /* Images.xcassets */; };
@@ -72,6 +74,13 @@
 			remoteGlobalIDString = F8111E3219A95C8B0040E7D1;
 			remoteInfo = "Alamofire iOS";
 		};
+		AFC51D451C14CCEE0054D478 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = AF378B481BF88E3000A4A414 /* Alamofire.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = F8111E3219A95C8B0040E7D1;
+			remoteInfo = "Alamofire iOS";
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -81,6 +90,7 @@
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
+				AFC51D441C14CCEE0054D478 /* Alamofire.framework in Embed Frameworks */,
 			);
 			name = "Embed Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -104,6 +114,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				AF378B621BF88F4200A4A414 /* Alamofire.framework in Frameworks */,
+				AFC51D431C14CCEE0054D478 /* Alamofire.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -178,6 +189,7 @@
 			);
 			dependencies = (
 				AF378B611BF88F2600A4A414 /* PBXTargetDependency */,
+				AFC51D461C14CCEE0054D478 /* PBXTargetDependency */,
 			);
 			name = Mobilne;
 			productName = Mobilne;
@@ -307,6 +319,11 @@
 			isa = PBXTargetDependency;
 			name = "Alamofire iOS";
 			targetProxy = AF378B601BF88F2600A4A414 /* PBXContainerItemProxy */;
+		};
+		AFC51D461C14CCEE0054D478 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = "Alamofire iOS";
+			targetProxy = AFC51D451C14CCEE0054D478 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 

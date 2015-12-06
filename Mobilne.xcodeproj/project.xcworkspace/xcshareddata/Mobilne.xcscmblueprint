@@ -1,0 +1,29 @@
+{
+  "DVTSourceControlWorkspaceBlueprintWorkingCopyRepositoryLocationsKey" : {
+
+  },
+  "DVTSourceControlWorkspaceBlueprintWorkingCopyStatesKey" : {
+    "3E940E026346D5C4AF315384FFD8194E3DABE284" : 0,
+    "67620B5EFA902936DF04070AF595B76AB0333747" : 0
+  },
+  "DVTSourceControlWorkspaceBlueprintIdentifierKey" : "D8CEF236-ECEC-443E-9EF8-FDCD55D8C8C4",
+  "DVTSourceControlWorkspaceBlueprintWorkingCopyPathsKey" : {
+    "3E940E026346D5C4AF315384FFD8194E3DABE284" : "",
+    "67620B5EFA902936DF04070AF595B76AB0333747" : "Alamofire\/"
+  },
+  "DVTSourceControlWorkspaceBlueprintNameKey" : "Mobilne",
+  "DVTSourceControlWorkspaceBlueprintVersion" : 204,
+  "DVTSourceControlWorkspaceBlueprintRelativePathToProjectKey" : "Mobilne.xcodeproj",
+  "DVTSourceControlWorkspaceBlueprintRemoteRepositoriesKey" : [
+    {
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryURLKey" : "https:\/\/github.com\/kanti1992\/mobile.git",
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositorySystemKey" : "com.apple.dt.Xcode.sourcecontrol.Git",
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryIdentifierKey" : "3E940E026346D5C4AF315384FFD8194E3DABE284"
+    },
+    {
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryURLKey" : "https:\/\/github.com\/Alamofire\/Alamofire.git",
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositorySystemKey" : "com.apple.dt.Xcode.sourcecontrol.Git",
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryIdentifierKey" : "67620B5EFA902936DF04070AF595B76AB0333747"
+    }
+  ]
+}
