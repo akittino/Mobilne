@@ -9,13 +9,15 @@
 import Alamofire
 import UIKit
 
-let serverURL: URLStringConvertible = "http://192.168.1.27:5678/product"
-let userURL: URLStringConvertible = "http://192.168.1.27:5678/user"
+let productsURL: URLStringConvertible = "http://127.0.0.1:5678/product/all"
+let serverURL: URLStringConvertible = "http://127.0.0.1:5678/product"
+let userURL: URLStringConvertible = "http://127.0.0.1:5678/user"
 let OK = 200
 let CONNECTION_ERROR = 403
 let PRECONDITION_FAILED = 412
 let FORBIDDEN = 500
 
+var token = ""
 var userName = ""
 
 class product {
@@ -49,7 +51,11 @@ class ViewController: UIViewController, UITableViewDataSource, UITextFieldDelega
     
     
     func serverGetData(callback: ((status: Int)->Void)?){
-        Alamofire.request(.GET, serverURL)
+        let parameters : [String: AnyObject] =  [
+            "userName": userName,
+            "token": token
+        ]
+        Alamofire.request(.POST, productsURL, parameters: parameters, encoding: .JSON)
             .responseJSON { response in
                 if response.response == nil{
                     callback!(status: CONNECTION_ERROR)
@@ -65,12 +71,13 @@ class ViewController: UIViewController, UITableViewDataSource, UITextFieldDelega
     
     func serverAddProduct(name: String, callback: ((status: Int)->Void)?){
         
-        let parameters = [
-            "name": name,
-            "value": 0
+        let parameters : [String: AnyObject] = [
+            "userName": userName,
+            "token": token,
+            "name": name
         ]
         
-        Alamofire.request(.POST, serverURL, parameters: parameters as? [String : AnyObject], encoding: .JSON)
+        Alamofire.request(.POST, serverURL, parameters: parameters, encoding: .JSON)
             .responseString{ response in
                 if response.response == nil{
                     callback!(status: CONNECTION_ERROR)
@@ -82,12 +89,13 @@ class ViewController: UIViewController, UITableViewDataSource, UITextFieldDelega
     
     func serverRemoveProduct(name: String, callback: ((status: Int)->Void)?){
         
-        let parameters = [
-            "name": name,
-            "value": 0
+        let parameters : [String: AnyObject] = [
+            "userName": userName,
+            "token": token,
+            "name": name
         ]
         
-        Alamofire.request(.DELETE, serverURL, parameters: parameters as? [String : AnyObject], encoding: .JSON)
+        Alamofire.request(.DELETE, serverURL, parameters: parameters, encoding: .JSON)
             .responseString{ response in
                 if response.response == nil{
                     callback!(status: CONNECTION_ERROR)
@@ -99,12 +107,14 @@ class ViewController: UIViewController, UITableViewDataSource, UITextFieldDelega
     
     func serverChangeProduct(name: String, change: Int, callback: ((status: Int)->Void)?){
         
-        let parameters = [
+        let parameters : [String: AnyObject] = [
+            "userName": userName,
+            "token": token,
             "name": name,
             "change": change
         ]
         
-        Alamofire.request(.PUT, serverURL, parameters: parameters as? [String : AnyObject], encoding: .JSON)
+        Alamofire.request(.PUT, serverURL, parameters: parameters, encoding: .JSON)
             .responseString{ response in
                 if response.response == nil{
                     callback!(status: CONNECTION_ERROR)
@@ -163,17 +173,20 @@ class ViewController: UIViewController, UITableViewDataSource, UITextFieldDelega
     
     func serverLogin(login: String, hash: String, callback: ((status: Int)->Void)?){
         
-        let parameters = [
-            "name": login,
-            "pwd": hash,
-            "value": 0
+        let parameters : [String: AnyObject] = [
+            "userName": login,
+            "pwd": hash
         ]
         
-        Alamofire.request(.POST, userURL, parameters: parameters as? [String : AnyObject], encoding: .JSON)
-            .responseString{ response in
+        Alamofire.request(.POST, userURL, parameters: parameters, encoding: .JSON)
+            .responseJSON{ response in
                 if response.response == nil{
                     callback!(status: CONNECTION_ERROR)
                 } else {
+                    if let d = response.result.value as? [String : AnyObject] {
+                        //debugPrint(d["token"]!)
+                        token = String(d["token"]!)
+                    }
                     callback?(status: (response.response?.statusCode)!)
                 }
         }
@@ -181,29 +194,32 @@ class ViewController: UIViewController, UITableViewDataSource, UITextFieldDelega
     
     func serverRegister(login: String, hash: String, callback: ((status: Int)->Void)?){
         
-        let parameters = [
-            "name": login,
-            "pwd": hash,
-            "value": 0
+        let parameters : [String: AnyObject] = [
+            "userName": login,
+            "pwd": hash
         ]
         
-        Alamofire.request(.PUT, userURL, parameters: parameters as? [String : AnyObject], encoding: .JSON)
-            .responseString{ response in
+        Alamofire.request(.PUT, userURL, parameters: parameters, encoding: .JSON)
+            .responseJSON{ response in
                 if response.response == nil{
                     callback!(status: CONNECTION_ERROR)
                 } else {
+                    if let d = response.result.value as? [String : AnyObject] {
+                        //debugPrint(d["token"]!)
+                        token = String(d["token"]!)
+                    }
                     callback?(status: (response.response?.statusCode)!)
                 }
         }
     }
     
-    func serverLogout(name: String, callback: ((status: Int)->Void)?){
-        let parameters = [
-            "name": name,
-            "logout": 0
+    func serverLogout(callback: ((status: Int)->Void)?){
+        let parameters : [String: AnyObject] = [
+            "userName": userName,
+            "token": token
         ]
         
-        Alamofire.request(.DELETE, userURL, parameters: parameters as? [String : AnyObject], encoding: .JSON)
+        Alamofire.request(.DELETE, userURL, parameters: parameters, encoding: .JSON)
             .responseString{ response in
                 if response.response == nil{
                     callback!(status: CONNECTION_ERROR)
@@ -321,8 +337,10 @@ class ViewController: UIViewController, UITableViewDataSource, UITextFieldDelega
     }
     
     @IBAction func logoutButton(sender: AnyObject) {
-        serverLogout(userName){ (status) -> Void in
+        serverLogout(){ (status) -> Void in
             if status == OK {
+                userName = ""
+                token = ""
                 self.switchButtons(false)
             } else {
                 self.showAlert("Error when logging out: \n" + String(status))
@@ -341,7 +359,7 @@ class ViewController: UIViewController, UITableViewDataSource, UITextFieldDelega
             removeButton.enabled = true
             plusButton.enabled = true
             minusButton.enabled = true
-            
+
             serverGetData(){ (status) -> Void in
                 if status == OK {
                     self.tableView.reloadData()
@@ -381,7 +399,7 @@ class ViewController: UIViewController, UITableViewDataSource, UITextFieldDelega
         
         return cell
     }
-
+    
     override func viewDidLoad() {
         switchButtons(false)
         super.viewDidLoad()
