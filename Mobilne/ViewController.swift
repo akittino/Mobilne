@@ -52,7 +52,6 @@ class ViewController: UIViewController, UITableViewDataSource, UITextFieldDelega
     
     func serverGetData(callback: ((status: Int)->Void)?){
         let parameters : [String: AnyObject] =  [
-            "userName": userName,
             "token": token
         ]
         Alamofire.request(.POST, productsURL, parameters: parameters, encoding: .JSON)
@@ -72,7 +71,6 @@ class ViewController: UIViewController, UITableViewDataSource, UITextFieldDelega
     func serverAddProduct(name: String, callback: ((status: Int)->Void)?){
         
         let parameters : [String: AnyObject] = [
-            "userName": userName,
             "token": token,
             "name": name
         ]
@@ -90,7 +88,6 @@ class ViewController: UIViewController, UITableViewDataSource, UITextFieldDelega
     func serverRemoveProduct(name: String, callback: ((status: Int)->Void)?){
         
         let parameters : [String: AnyObject] = [
-            "userName": userName,
             "token": token,
             "name": name
         ]
@@ -108,7 +105,6 @@ class ViewController: UIViewController, UITableViewDataSource, UITextFieldDelega
     func serverChangeProduct(name: String, change: Int, callback: ((status: Int)->Void)?){
         
         let parameters : [String: AnyObject] = [
-            "userName": userName,
             "token": token,
             "name": name,
             "change": change
@@ -137,17 +133,12 @@ class ViewController: UIViewController, UITableViewDataSource, UITextFieldDelega
         if selectedRow == nil{
             showAlert("Select row")
         } else {
-            if (data[selectedRow!].value + change) < 0 {
-                showAlert("New value would be below 0. Stopped")
-            }
-            else{
-                serverChangeProduct(data[selectedRow!].name, change: change){ (status) -> Void in
-                    if status == OK {
-                        self.data[selectedRow!].value += change
-                        self.tableView.reloadData()
-                    } else {
-                        self.showAlert("Error when changing quantity of product to server: \n" + String(status))
-                    }
+            serverChangeProduct(data[selectedRow!].name, change: change){ (status) -> Void in
+                if status == OK {
+                    self.data[selectedRow!].value += change
+                    self.tableView.reloadData()
+                } else {
+                    self.showAlert("Error when changing quantity of product to server: \n" + String(status))
                 }
             }
         }
@@ -215,7 +206,6 @@ class ViewController: UIViewController, UITableViewDataSource, UITextFieldDelega
     
     func serverLogout(callback: ((status: Int)->Void)?){
         let parameters : [String: AnyObject] = [
-            "userName": userName,
             "token": token
         ]
         

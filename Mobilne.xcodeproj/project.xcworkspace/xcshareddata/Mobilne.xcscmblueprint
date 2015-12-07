@@ -1,13 +1,16 @@
 {
+  "DVTSourceControlWorkspaceBlueprintPrimaryRemoteRepositoryKey" : "A646FE6D3323452D95C46AC3C7B61A9D747C5218",
   "DVTSourceControlWorkspaceBlueprintWorkingCopyRepositoryLocationsKey" : {
 
   },
   "DVTSourceControlWorkspaceBlueprintWorkingCopyStatesKey" : {
+    "A646FE6D3323452D95C46AC3C7B61A9D747C5218" : 0,
     "3E940E026346D5C4AF315384FFD8194E3DABE284" : 0,
     "67620B5EFA902936DF04070AF595B76AB0333747" : 0
   },
   "DVTSourceControlWorkspaceBlueprintIdentifierKey" : "D8CEF236-ECEC-443E-9EF8-FDCD55D8C8C4",
   "DVTSourceControlWorkspaceBlueprintWorkingCopyPathsKey" : {
+    "A646FE6D3323452D95C46AC3C7B61A9D747C5218" : "Mobilne\/",
     "3E940E026346D5C4AF315384FFD8194E3DABE284" : "",
     "67620B5EFA902936DF04070AF595B76AB0333747" : "Alamofire\/"
   },
@@ -24,6 +27,11 @@
       "DVTSourceControlWorkspaceBlueprintRemoteRepositoryURLKey" : "https:\/\/github.com\/Alamofire\/Alamofire.git",
       "DVTSourceControlWorkspaceBlueprintRemoteRepositorySystemKey" : "com.apple.dt.Xcode.sourcecontrol.Git",
       "DVTSourceControlWorkspaceBlueprintRemoteRepositoryIdentifierKey" : "67620B5EFA902936DF04070AF595B76AB0333747"
+    },
+    {
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryURLKey" : "https:\/\/github.com\/kanti1992\/Mobilne.git",
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositorySystemKey" : "com.apple.dt.Xcode.sourcecontrol.Git",
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryIdentifierKey" : "A646FE6D3323452D95C46AC3C7B61A9D747C5218"
     }
   ]
 }
