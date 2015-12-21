@@ -12,13 +12,11 @@ import UIKit
 let productsURL: URLStringConvertible = "http://127.0.0.1:5678/product/all"
 let serverURL: URLStringConvertible = "http://127.0.0.1:5678/product"
 let userURL: URLStringConvertible = "http://127.0.0.1:5678/user"
+let syncURL: URLStringConvertible = "http://127.0.0.1:5678/sync"
 let OK = 200
 let CONNECTION_ERROR = 403
 let PRECONDITION_FAILED = 412
 let FORBIDDEN = 500
-
-var token = ""
-var userName = ""
 
 class product {
     var name: String
@@ -31,7 +29,13 @@ class product {
 
 class ViewController: UIViewController, UITableViewDataSource, UITextFieldDelegate {
     
-    var data = [product]()
+    var globalData = [product]()
+    var deviceData = [product]()
+    var othersData = [product]()
+    
+    var syncOn = true
+    var token = ""
+    var userName = ""
     
     @IBOutlet weak var nameTextField: UITextField!
     @IBOutlet weak var tableView: UITableView!
@@ -39,6 +43,7 @@ class ViewController: UIViewController, UITableViewDataSource, UITextFieldDelega
     @IBOutlet weak var loginTextbox: UITextField!
     @IBOutlet weak var passwordTextbox: UITextField!
     
+    @IBOutlet weak var syncButton: UIButton!
     @IBOutlet weak var loginButton: UIButton!
     @IBOutlet weak var logoutButton: UIButton!
     @IBOutlet weak var registerButton: UIButton!
@@ -47,114 +52,107 @@ class ViewController: UIViewController, UITableViewDataSource, UITextFieldDelega
     @IBOutlet weak var removeButton: UIButton!
     @IBOutlet weak var minusButton: UIButton!
     @IBOutlet weak var plusButton: UIButton!
-
     
+    func jsonifyDeviceData() -> String {
+        if deviceData.isEmpty{
+            return "empty"
+        }
+        var data = "{"
+        for d in deviceData{
+            data += "\"" + d.name + "\":" + String(d.value) + ","
+        }
+        data.removeAtIndex(data.endIndex.predecessor())
+        data += "}"
+        return data
+    }
     
-    func serverGetData(callback: ((status: Int)->Void)?){
-        let parameters : [String: AnyObject] =  [
-            "token": token
-        ]
-        Alamofire.request(.POST, productsURL, parameters: parameters, encoding: .JSON)
+    func syncWithServer(callback: ((status: Int)->Void)?) {
+        if syncOn == false{
+            callback?(status: OK)
+            return
+        }
+        
+        let parameters : [String:AnyObject] =  [
+                "token": self.token,
+                "product": jsonifyDeviceData()
+            ]
+        
+        Alamofire.request(.POST, syncURL, parameters: parameters, encoding: .JSON)
             .responseJSON { response in
                 if response.response == nil{
                     callback!(status: CONNECTION_ERROR)
                 } else {
                     let d = response.result.value as? [String: AnyObject]
+                    self.othersData.removeAll()
+                    
                     for (n, k) in d!{
-                        self.data.append(product(name: n, value: Int(String(k))!))
+                        self.othersData.append(product(name: n, value: Int(String(k))!))
+                        var found = 0
+                        for p in self.deviceData
+                        {
+                            if p.name == n{
+                                found = 1
+                                break
+                            }
+                        }
+                        if found == 0{
+                            self.deviceData.append(product(name: n, value: 0))
+                        }
                     }
+                    
+                    for var i = 0; i < self.deviceData.count; ++i{
+                        let d = self.deviceData[i]
+                        var found = 0
+                        for o in self.othersData{
+                            if o.name == d.name{
+                                found = 1
+                                break
+                            }
+                        }
+                        if found == 0{
+                            self.deviceData.removeAtIndex(i)
+                        }
+                    }
+                    
                     callback?(status: OK)
                 }
         }
-    }
-    
-    func serverAddProduct(name: String, callback: ((status: Int)->Void)?){
-        
-        let parameters : [String: AnyObject] = [
-            "token": token,
-            "name": name
-        ]
-        
-        Alamofire.request(.POST, serverURL, parameters: parameters, encoding: .JSON)
-            .responseString{ response in
-                if response.response == nil{
-                    callback!(status: CONNECTION_ERROR)
-                } else {
-                    callback?(status: (response.response?.statusCode)!)
-                }
-        }
-    }
-    
-    func serverRemoveProduct(name: String, callback: ((status: Int)->Void)?){
-        
-        let parameters : [String: AnyObject] = [
-            "token": token,
-            "name": name
-        ]
-        
-        Alamofire.request(.DELETE, serverURL, parameters: parameters, encoding: .JSON)
-            .responseString{ response in
-                if response.response == nil{
-                    callback!(status: CONNECTION_ERROR)
-                } else {
-                    callback?(status: (response.response?.statusCode)!)
-                }
-        }
-    }
-    
-    func serverChangeProduct(name: String, change: Int, callback: ((status: Int)->Void)?){
-        
-        let parameters : [String: AnyObject] = [
-            "token": token,
-            "name": name,
-            "change": change
-        ]
-        
-        Alamofire.request(.PUT, serverURL, parameters: parameters, encoding: .JSON)
-            .responseString{ response in
-                if response.response == nil{
-                    callback!(status: CONNECTION_ERROR)
-                } else {
-                    callback?(status: (response.response?.statusCode)!)
-                }
-        }
-    }
-    func nameExists(name: String) -> Bool{
-        for x in data{
-            if x.name == name{
-                return true
-            }
-        }
-        return false
-    }
-    
-    func changeValue(change: Int) {
-        let selectedRow = tableView.indexPathForSelectedRow?.row
-        if selectedRow == nil{
-            showAlert("Select row")
-        } else {
-            serverChangeProduct(data[selectedRow!].name, change: change){ (status) -> Void in
-                if status == OK {
-                    self.data[selectedRow!].value += change
-                    self.tableView.reloadData()
-                } else {
-                    self.showAlert("Error when changing quantity of product to server: \n" + String(status))
-                }
-            }
-        }
-    }
-    
-    func showAlert(message: String) {
-        let alertController = UIAlertController(title: "Error", message: message, preferredStyle: UIAlertControllerStyle.Alert)
-        alertController.addAction(UIAlertAction(title: "Dismiss", style:UIAlertActionStyle.Default,handler: nil))
-        
-        self.presentViewController(alertController, animated: true, completion: nil)
     }
     
     func reload() {
         dispatch_async(dispatch_get_main_queue()) {
             self.tableView.reloadData()
         }
+    }
+    
+    func evalGlobalData(){
+        globalData.removeAll()
+        for p in deviceData{
+            let tmp = product(name: p.name, value: p.value)
+            for q in othersData{
+                if q.name == p.name{
+                    tmp.value += q.value
+                }
+            }
+            globalData.append(tmp)
+        }
+    }
+
+    func nameExists(name: String) -> Bool{
+        for x in globalData{
+            if x.name == name{
+                return true
+            }
+        }
+        return false
+    }
+
+    
+    func showAlert(message: String) {
+        let alertController = UIAlertController(title: "Error", message: message, preferredStyle: UIAlertControllerStyle.Alert)
+        alertController.addAction(UIAlertAction(title: "Dismiss", style:UIAlertActionStyle.Default,handler: nil))
+        
+        self.presentViewController(alertController, animated: true, completion: nil)
     }
     
     func textFieldShouldReturn(userText: UITextField) -> Bool {
@@ -175,8 +173,7 @@ class ViewController: UIViewController, UITableViewDataSource, UITextFieldDelega
                     callback!(status: CONNECTION_ERROR)
                 } else {
                     if let d = response.result.value as? [String : AnyObject] {
-                        //debugPrint(d["token"]!)
-                        token = String(d["token"]!)
+                        self.token = String(d["token"]!)
                     }
                     callback?(status: (response.response?.statusCode)!)
                 }
@@ -196,8 +193,7 @@ class ViewController: UIViewController, UITableViewDataSource, UITextFieldDelega
                     callback!(status: CONNECTION_ERROR)
                 } else {
                     if let d = response.result.value as? [String : AnyObject] {
-                        //debugPrint(d["token"]!)
-                        token = String(d["token"]!)
+                        self.token = String(d["token"]!)
                     }
                     callback?(status: (response.response?.statusCode)!)
                 }
@@ -217,10 +213,41 @@ class ViewController: UIViewController, UITableViewDataSource, UITextFieldDelega
                     callback?(status: (response.response?.statusCode)!)
                 }
         }
+        globalData.removeAll()
+        deviceData.removeAll()
+        othersData.removeAll()
+        // TODO save ???
     }
     
     func createHash(password: String) -> String {
-        return String(password.hashValue)
+        return String(password)
+    }
+    
+    func syncButtonChange(s:Bool){
+        if s == true{
+            syncOn = true
+            syncButton.setTitle("SyncOn", forState: UIControlState.Normal)
+            syncButton.setTitleColor(UIColor.greenColor(), forState: UIControlState.Normal)
+            if token == "" {
+                return
+            }
+            syncWithServer(){ (status) -> Void in
+                if status != OK {
+                    self.showAlert("Error in sync")
+                }
+                else{
+                    self.evalGlobalData()
+                    self.tableView.reloadData()
+                }
+            }
+        } else {
+            syncOn = false
+            syncButton.setTitle("SyncOff", forState: UIControlState.Normal)
+            syncButton.setTitleColor(UIColor.redColor(), forState: UIControlState.Normal)
+        }
+    }
+    @IBAction func syncButtonTouchUp(sender: AnyObject) {
+        syncButtonChange(!syncOn)
     }
     
     @IBAction func removeButtonTouchUp(sender: AnyObject) {
@@ -228,12 +255,32 @@ class ViewController: UIViewController, UITableViewDataSource, UITextFieldDelega
         if selectedRow == nil {
             showAlert("Select row")
         } else {
-            serverRemoveProduct(data[selectedRow!].name){ (status) -> Void in
-                if status == OK {
-                    self.data.removeAtIndex(selectedRow!)
+            
+            var i = 0
+            for p in self.deviceData{
+                if p.name == self.globalData[selectedRow!].name{
+                    deviceData.removeAtIndex(i)
+                    break
+                }
+                i += 1
+            }
+            
+            i = 0
+            for p in self.othersData{
+                if p.name == self.globalData[selectedRow!].name{
+                    othersData.removeAtIndex(i)
+                    break
+                }
+                i += 1
+            }
+            
+            syncWithServer(){ (status) -> Void in
+                if status != OK {
+                    self.showAlert("Error in sync")
+                }
+                else{
+                    self.evalGlobalData()
                     self.tableView.reloadData()
-                } else {
-                    self.showAlert("Error when deleting product from server: \n" + String(status))
                 }
             }
         }
@@ -248,13 +295,28 @@ class ViewController: UIViewController, UITableViewDataSource, UITextFieldDelega
             showAlert("Given name already exists")
         }
         else{
-            serverAddProduct(name){ (status) -> Void in
-                if status == OK {
-                    self.data.append(product(name: name, value:0))
-                    self.tableView.reloadData()
-                    self.nameTextField.text! = ""
+            self.deviceData.append(product(name: name, value:0))
+            self.nameTextField.text! = ""
+            
+            syncWithServer(){ (status) -> Void in
+                if status != OK {
+                    self.showAlert("Error in sync")
                 } else {
-                    self.showAlert("Error when adding product to server: \n" + String(status))
+                    self.evalGlobalData()
+                    self.tableView.reloadData()
+                }
+            }
+        }
+    }
+    
+    func changeValue(change: Int) {
+        let selectedRow = tableView.indexPathForSelectedRow?.row
+        if selectedRow == nil{
+            showAlert("Select row")
+        } else {
+            for p in self.deviceData{
+                if p.name == self.globalData[selectedRow!].name{
+                    p.value += change
                 }
             }
         }
@@ -278,6 +340,15 @@ class ViewController: UIViewController, UITableViewDataSource, UITextFieldDelega
                 showAlert("Unknown error")
             }
             nameTextField.text = ""
+            
+            syncWithServer(){ (status) -> Void in
+                if status != OK {
+                    self.showAlert("Error in sync")
+                } else {
+                    self.evalGlobalData()
+                    self.tableView.reloadData()
+                }
+            }
         }
     }
     @IBAction func loginButton(sender: AnyObject) {
@@ -290,10 +361,22 @@ class ViewController: UIViewController, UITableViewDataSource, UITextFieldDelega
             return
         }
         
+        if syncOn == false{
+            syncButtonChange(true)
+        }
+        
         serverLogin(user!, hash: hash){ (status) -> Void in
             if status == OK {
-                userName = user!
+                self.userName = user!
                 self.switchButtons(true)
+                self.syncWithServer(){ (status) -> Void in
+                    if status != OK {
+                        self.showAlert("Error in sync")
+                    } else {
+                        self.evalGlobalData()
+                        self.tableView.reloadData()
+                    }
+                }
             } else if status == PRECONDITION_FAILED {
                 self.showAlert("There's no such a user")
             } else if status == FORBIDDEN {
@@ -313,9 +396,13 @@ class ViewController: UIViewController, UITableViewDataSource, UITextFieldDelega
             return
         }
         
+        if syncOn == false{
+            syncButtonChange(true)
+        }
+        
         serverRegister(user!, hash: hash){ (status) -> Void in
             if status == OK {
-                userName = user!
+                self.userName = user!
                 self.switchButtons(true)
             } else if status == PRECONDITION_FAILED {
                 self.showAlert("User exists")
@@ -324,14 +411,29 @@ class ViewController: UIViewController, UITableViewDataSource, UITextFieldDelega
             }
         }
         
+        syncWithServer(){ (status) -> Void in
+            if status != OK {
+                self.showAlert("Error in sync")
+            } else {
+                self.evalGlobalData()
+                self.tableView.reloadData()
+            }
+        }
+        
     }
     
     @IBAction func logoutButton(sender: AnyObject) {
+        if syncOn == false{
+            syncButtonChange(true)
+        }
+        
         serverLogout(){ (status) -> Void in
             if status == OK {
-                userName = ""
-                token = ""
+                self.userName = ""
+                self.token = ""
                 self.switchButtons(false)
+                self.evalGlobalData()
+                self.tableView.reloadData()
             } else {
                 self.showAlert("Error when logging out: \n" + String(status))
             }
@@ -350,13 +452,6 @@ class ViewController: UIViewController, UITableViewDataSource, UITextFieldDelega
             plusButton.enabled = true
             minusButton.enabled = true
 
-            serverGetData(){ (status) -> Void in
-                if status == OK {
-                    self.tableView.reloadData()
-                } else {
-                    self.showAlert("Error when reading init data from server: \n" + String(status))
-                }
-            }
         }
         else{
             label.text = "Please log in"
@@ -369,7 +464,10 @@ class ViewController: UIViewController, UITableViewDataSource, UITextFieldDelega
             plusButton.enabled = false
             minusButton.enabled = false
             
-            data.removeAll()
+            globalData.removeAll()
+            deviceData.removeAll()
+            othersData.removeAll()
+            // TODO save user data???
             self.tableView.reloadData()
         }
     }
@@ -379,19 +477,20 @@ class ViewController: UIViewController, UITableViewDataSource, UITextFieldDelega
     }
     
     func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return data.count
+        return globalData.count
     }
     
     func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
         let cell = UITableViewCell()
         cell.textLabel!.font = UIFont(name:"Console", size:22)
-        cell.textLabel?.text = data[indexPath.row].name + " - quantity: " + String(data[indexPath.row].value)
+        cell.textLabel?.text = globalData[indexPath.row].name + " - quantity: " + String(globalData[indexPath.row].value)
         
         return cell
     }
     
     override func viewDidLoad() {
         switchButtons(false)
+        syncButton.setTitleColor(UIColor.greenColor(), forState: UIControlState.Normal)
         super.viewDidLoad()
         self.nameTextField.delegate = self
     }
