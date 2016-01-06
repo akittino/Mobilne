@@ -13,6 +13,12 @@ let productsURL: URLStringConvertible = "http://127.0.0.1:5678/product/all"
 let serverURL: URLStringConvertible = "http://127.0.0.1:5678/product"
 let userURL: URLStringConvertible = "http://127.0.0.1:5678/user"
 let syncURL: URLStringConvertible = "http://127.0.0.1:5678/sync"
+
+let tokenFile = "token.txt"
+let userNameFile = "userName.txt"
+let deviceDataFile = "device.txt"
+let othersDataFile = "others.txt"
+
 let OK = 200
 let CONNECTION_ERROR = 403
 let PRECONDITION_FAILED = 412
@@ -53,6 +59,91 @@ class ViewController: UIViewController, UITableViewDataSource, UITextFieldDelega
     @IBOutlet weak var minusButton: UIButton!
     @IBOutlet weak var plusButton: UIButton!
     
+    @IBAction func saveButtonTouchUp(sender: AnyObject) {
+        saveData()
+    }
+    
+    func productArrayToString(data: [product]) -> String {
+        var s = ""
+        for p in data{
+            s += p.name + " " + String(p.value) + "\n"
+        }
+        return s
+    }
+    
+    func stringToProductArray(st: String) -> [product] {
+        var data = [product]()
+        let productsArray = st.characters.split {$0 == "\n"}.map(String.init)
+        for p in productsArray{
+            let vals = p.characters.split {$0 == " "}.map(String.init)
+            let tmp = product(name: vals[0], value: Int(vals[1])!)
+            data.append(tmp)
+        }
+        return data
+    }
+    
+    func loadData() -> Void {
+        if let dir : NSString = NSSearchPathForDirectoriesInDomains(NSSearchPathDirectory.DocumentDirectory, NSSearchPathDomainMask.AllDomainsMask, true).first {
+            
+            let tokenPath = dir.stringByAppendingPathComponent(tokenFile)
+            let userNamePath = dir.stringByAppendingPathComponent(userNameFile)
+            let deviceDataPath = dir.stringByAppendingPathComponent(deviceDataFile)
+            let othersDataPath = dir.stringByAppendingPathComponent(othersDataFile)
+
+            
+            do {
+                token = try NSString(contentsOfFile: tokenPath,
+                    encoding: NSUTF8StringEncoding) as String
+                userName = try NSString(contentsOfFile: userNamePath,
+                    encoding: NSUTF8StringEncoding) as String
+                let deviceData2String = try NSString(contentsOfFile: deviceDataPath,
+                    encoding: NSUTF8StringEncoding)
+                let othersData2String = try NSString(contentsOfFile: othersDataPath,
+                    encoding: NSUTF8StringEncoding)
+                
+                deviceData = stringToProductArray(deviceData2String as String)
+                othersData = stringToProductArray(othersData2String as String)
+            }
+            catch {
+                token = ""
+                userName = ""
+                deviceData = [product]()
+                othersData = [product]()
+                debugPrint("fail when loading data")
+                debugPrint(error)
+            }
+        }
+    }
+    
+    func saveData() -> Void {
+
+        if let dir : NSString =
+            NSSearchPathForDirectoriesInDomains(NSSearchPathDirectory.DocumentDirectory,
+            NSSearchPathDomainMask.AllDomainsMask, true).first {
+                
+            let tokenPath = dir.stringByAppendingPathComponent(tokenFile)
+            let userNamePath = dir.stringByAppendingPathComponent(userNameFile)
+            let deviceDataPath = dir.stringByAppendingPathComponent(deviceDataFile)
+            let othersDataPath = dir.stringByAppendingPathComponent(othersDataFile)
+            
+            let devData = productArrayToString(deviceData)
+            let othData = productArrayToString(othersData)
+                
+            do {
+                try token.writeToFile(tokenPath, atomically: false, encoding: NSUTF8StringEncoding)
+                try userName.writeToFile(userNamePath, atomically: false, encoding: NSUTF8StringEncoding)
+                try devData.writeToFile(deviceDataPath, atomically: false,
+                    encoding: NSUTF8StringEncoding)
+                try othData.writeToFile(othersDataPath, atomically: false,
+                    encoding: NSUTF8StringEncoding)
+            }
+            catch {
+                debugPrint("fail when saving data")
+                debugPrint(error)
+            }
+        }
+    }
+    
     func jsonifyDeviceData() -> String {
         if deviceData.isEmpty{
             return "empty"
@@ -85,19 +176,24 @@ class ViewController: UIViewController, UITableViewDataSource, UITextFieldDelega
                     let d = response.result.value as? [String: AnyObject]
                     self.othersData.removeAll()
                     
-                    for (n, k) in d!{
-                        self.othersData.append(product(name: n, value: Int(String(k))!))
-                        var found = 0
-                        for p in self.deviceData
-                        {
-                            if p.name == n{
-                                found = 1
-                                break
+                    if d != nil {
+                        for (n, k) in d!{
+                            self.othersData.append(product(name: n, value: Int(String(k))!))
+                            var found = 0
+                            for p in self.deviceData
+                            {
+                                if p.name == n{
+                                    found = 1
+                                    break
+                                }
+                            }
+                            if found == 0{
+                                self.deviceData.append(product(name: n, value: 0))
                             }
                         }
-                        if found == 0{
-                            self.deviceData.append(product(name: n, value: 0))
-                        }
+                    }
+                    else{
+                        debugPrint("Data was empty")
                     }
                     
                     for var i = 0; i < self.deviceData.count; ++i{
@@ -451,7 +547,9 @@ class ViewController: UIViewController, UITableViewDataSource, UITextFieldDelega
             removeButton.enabled = true
             plusButton.enabled = true
             minusButton.enabled = true
-
+            
+            self.evalGlobalData()
+            self.tableView.reloadData()
         }
         else{
             label.text = "Please log in"
@@ -467,7 +565,8 @@ class ViewController: UIViewController, UITableViewDataSource, UITextFieldDelega
             globalData.removeAll()
             deviceData.removeAll()
             othersData.removeAll()
-            // TODO save user data???
+            
+            self.evalGlobalData()
             self.tableView.reloadData()
         }
     }
@@ -491,6 +590,10 @@ class ViewController: UIViewController, UITableViewDataSource, UITextFieldDelega
     override func viewDidLoad() {
         switchButtons(false)
         syncButton.setTitleColor(UIColor.greenColor(), forState: UIControlState.Normal)
+        loadData()
+        if userName != "" {
+            switchButtons(true)
+        }
         super.viewDidLoad()
         self.nameTextField.delegate = self
     }

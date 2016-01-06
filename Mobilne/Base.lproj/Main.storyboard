@@ -110,6 +110,13 @@
                                     <action selector="syncButtonTouchUp:" destination="1bF-QT-LeZ" eventType="touchUpInside" id="6ZE-mE-pp0"/>
                                 </connections>
                             </button>
+                            <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="dhE-oA-YYg">
+                                <rect key="frame" x="252" y="80" width="56" height="30"/>
+                                <state key="normal" title="Save"/>
+                                <connections>
+                                    <action selector="saveButtonTouchUp:" destination="1bF-QT-LeZ" eventType="touchUpInside" id="wcZ-Jc-a9I"/>
+                                </connections>
+                            </button>
                         </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
                     </view>
