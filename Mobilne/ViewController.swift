@@ -523,17 +523,14 @@ class ViewController: UIViewController, UITableViewDataSource, UITextFieldDelega
             syncButtonChange(true)
         }
         
-        serverLogout(){ (status) -> Void in
-            if status == OK {
-                self.userName = ""
-                self.token = ""
-                self.switchButtons(false)
-                self.evalGlobalData()
-                self.tableView.reloadData()
-            } else {
-                self.showAlert("Error when logging out: \n" + String(status))
-            }
-        }
+        globalData.removeAll()
+        deviceData.removeAll()
+        othersData.removeAll()
+        self.userName = ""
+        self.token = ""
+        self.switchButtons(false)
+        self.evalGlobalData()
+        self.tableView.reloadData()
     }
     
     func switchButtons(login: Bool){
